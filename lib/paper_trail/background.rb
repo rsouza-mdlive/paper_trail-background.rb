@@ -74,15 +74,18 @@ module PaperTrail
 
     private def trigger_write(record, data, event)
       version_class = record.class.paper_trail.version_class
-
+      binding.pry
       version_class.after_transaction do
-        VersionJob.perform_async(
-          version_class,
-          data.merge(
-            :item_id => record.id,
-            :item_type => record.class.name
-          ),
-          event
+        MdliveShared::EventNotifier.event(
+          "versions:save",
+          {
+            class: version_class,
+            attributes: data.merge(
+              :item_id => record.id,
+              :item_type => record.class.name
+            ),
+            event: event
+          }
         )
       end
     end
